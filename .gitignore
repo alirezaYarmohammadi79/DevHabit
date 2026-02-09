@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+.containers
+/.container/postgres_data
+/ .containers/seq_data/Stream/stream.2.metadata
