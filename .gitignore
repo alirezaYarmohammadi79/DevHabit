@@ -370,3 +370,5 @@ FodyWeavers.xsd
 /.gitignore
 / .containers/seq_data/Stream/stream.collection.daef5036ea9445e295a8c3cf5402070d.docc
 / .containers/seq_data/Stream/stream.collection.daef5036ea9445e295a8c3cf5402070d.docc
+/ .containers/seq_data/Seq.json
+/.gitignore
