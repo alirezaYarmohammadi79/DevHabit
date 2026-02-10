@@ -364,4 +364,7 @@ FodyWeavers.xsd
 
 .containers
 /.container/postgres_data
+/ .containers/seq_data
 / .containers/seq_data/Stream/stream.2.metadata
+/ .containers/seq_data/Seq.json
+/.gitignore
