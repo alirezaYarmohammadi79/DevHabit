@@ -18,3 +18,4 @@ public sealed record CreateHabitDto
 
     public MilestoneDto? Milestone { get; init; }
 }
+
