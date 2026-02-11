@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 
-builder.AddControllers()
+builder.AddApiServices()
        .AddErrorHandling()
        .AddDatabase()
        .AddObservabilty()

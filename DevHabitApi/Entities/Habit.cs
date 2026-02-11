@@ -47,31 +47,10 @@ public enum HabitStatus
     Compeleted = 2,
 }
 
-public sealed class Frequency
-{
-    public FrequencyType Type { get; set; }
-
-    public int TimesPerPeriod { get; set; }
-}
-
 public enum FrequencyType
 {
     None = 0,
     Daily = 1,
     Weekly = 2,
     Monthly = 3,
-}
-
-public sealed class Target
-{
-    public int Value { get; set; }
-
-    public string Unit { get; set; }
-}
-
-public sealed class Milestone
-{
-    public int Target { get; set; }
-
-    public int Current { get; set; }
 }
