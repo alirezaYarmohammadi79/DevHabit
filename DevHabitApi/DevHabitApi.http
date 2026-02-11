@@ -1,6 +1,2 @@
-@DevHabitApi_HostAddress = http://localhost:5000
+@DevHabitApi_HostAddress = http://localhost:7000
 
-GET {{DevHabitApi_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
