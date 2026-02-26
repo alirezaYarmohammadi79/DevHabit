@@ -65,7 +65,7 @@ internal static class HabitMappings
         };
     }
 
-    public static Habit ToEntity(this CreateHabitDto dto)
+    public static Habit ToEntity(this CreateHabitDto dto , string userId)
     {
         Habit habit = new()
         {
@@ -73,6 +73,7 @@ internal static class HabitMappings
             Name = dto.Name,
             Description = dto.Description,
             Type = dto.Type,
+            UserId = userId,
             Frequency = new Frequency
             {
                 Type = dto.Frequency.Type,
