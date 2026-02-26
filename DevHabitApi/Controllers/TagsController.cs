@@ -11,7 +11,7 @@ using OpenTelemetry.Trace;
 
 namespace DevHabitApi.Controllers;
 
-[Authorize]
+[Authorize(Roles = Roles.Member)]
 [ApiController]
 [Route("tags")]
 public sealed class TagsController(
