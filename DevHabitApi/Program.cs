@@ -9,7 +9,8 @@ builder.AddApiServices()
        .AddErrorHandling()
        .AddDatabase()
        .AddObservabilty()
-       .AddApplicationServices();
+       .AddApplicationServices()
+       .AddAuthenticationServices();
 
 var app = builder.Build();
 
@@ -23,6 +24,9 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseExceptionHandler();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

@@ -1,15 +1,20 @@
-﻿using Asp.Versioning;
+﻿using System.Text;
+using Asp.Versioning;
 using DevHabitApi.Database;
 using DevHabitApi.DTOs.Habits;
 using DevHabitApi.Entities;
 using DevHabitApi.Middleware;
 using DevHabitApi.Services;
 using DevHabitApi.Services.Sorting;
+using DevHabitApi.Settings;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Serialization;
 using Npgsql;
 using OpenTelemetry;
@@ -88,6 +93,13 @@ public static class DependecyInjection
                     npgsqlOptions => npgsqlOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Application))
             .UseSnakeCaseNamingConvention());
 
+        builder.Services.AddDbContext<ApplicationIdentityDbContext>(options =>
+            options
+                .UseNpgsql(
+                    builder.Configuration.GetConnectionString("Database"),
+                    npgsqlOptions => npgsqlOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Identity))
+            .UseSnakeCaseNamingConvention());
+
         return builder;
     }
 
@@ -126,6 +138,39 @@ public static class DependecyInjection
 
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddTransient<LinkService>();
+
+        builder.Services.AddTransient<TokenProvider>();
+
+        return builder;
+    }
+
+    public static WebApplicationBuilder AddAuthenticationServices(this WebApplicationBuilder builder) 
+    {
+        builder.Services
+            .AddIdentity<IdentityUser , IdentityRole>()
+            .AddEntityFrameworkStores<ApplicationIdentityDbContext>();
+
+        builder.Services.Configure<JwtAuthOptions>(builder.Configuration.GetSection("Jwt"));
+
+        JwtAuthOptions jwtAuthOptions = builder.Configuration.GetSection("Jwt").Get<JwtAuthOptions>()!;
+
+        builder.Services
+            .AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; 
+            })
+            .AddJwtBearer(options => 
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidIssuer = jwtAuthOptions.Issuer,
+                    ValidAudience = jwtAuthOptions.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtAuthOptions.Key)),
+                };
+            });
+
+        builder.Services.AddAuthentication();
 
         return builder;
     }
