@@ -1,4 +1,4 @@
-﻿namespace DevHabitApi.Entities;
+﻿namespace DevHabit.Api.Entities;
 
 public static class Roles
 {

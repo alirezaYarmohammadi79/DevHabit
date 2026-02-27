@@ -1,14 +1,14 @@
-﻿using DevHabitApi.Entities;
+using DevHabit.Api.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace DevHabitApi.Database.Configurations;
+namespace DevHabit.Api.Database.Configurations;
 
-public class GithubAccessTokenConfiguration : IEntityTypeConfiguration<GithubAccessToken>
+internal sealed class GitHubAccessTokenConfiguration : IEntityTypeConfiguration<GitHubAccessToken>
 {
-    public void Configure(EntityTypeBuilder<GithubAccessToken> builder)
+    public void Configure(EntityTypeBuilder<GitHubAccessToken> builder)
     {
-        builder.HasKey(g => g.Id);
+        builder.HasKey(gh => gh.Id);
 
         builder.Property(gh => gh.Id).HasMaxLength(500);
         builder.Property(gh => gh.UserId).HasMaxLength(500);
@@ -17,7 +17,7 @@ public class GithubAccessTokenConfiguration : IEntityTypeConfiguration<GithubAcc
         builder.HasIndex(gh => gh.UserId).IsUnique();
 
         builder.HasOne<User>()
-            .WithMany()
-            .HasForeignKey(gh => gh.UserId);
+            .WithOne()
+            .HasForeignKey<GitHubAccessToken>(gh => gh.UserId);
     }
 }

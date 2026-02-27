@@ -23,16 +23,86 @@ namespace DevHabitApi.Migrations.Application
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("DevHabitApi.Entities.GithubAccessToken", b =>
+            modelBuilder.Entity("DevHabit.Api.Entities.Entry", b =>
                 {
                     b.Property<string>("Id")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("id");
 
-                    b.Property<DateTime>("CreateAtUtc")
+                    b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("create_at_utc");
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<string>("ExternalId")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("external_id");
+
+                    b.Property<string>("HabitId")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("habit_id");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_archived");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("notes");
+
+                    b.Property<int>("Source")
+                        .HasColumnType("integer")
+                        .HasColumnName("source");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("user_id");
+
+                    b.Property<int>("Value")
+                        .HasColumnType("integer")
+                        .HasColumnName("value");
+
+                    b.HasKey("Id")
+                        .HasName("pk_entries");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_entries_external_id")
+                        .HasFilter("external_id IS NOT NULL");
+
+                    b.HasIndex("HabitId")
+                        .HasDatabaseName("ix_entries_habit_id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_entries_user_id");
+
+                    b.ToTable("entries", "dev_habit");
+                });
+
+            modelBuilder.Entity("DevHabit.Api.Entities.GitHubAccessToken", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
 
                     b.Property<DateTime>("ExpiresAtUtc")
                         .HasColumnType("timestamp with time zone")
@@ -51,25 +121,29 @@ namespace DevHabitApi.Migrations.Application
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_github_access_tokens");
+                        .HasName("pk_git_hub_access_tokens");
 
                     b.HasIndex("UserId")
                         .IsUnique()
-                        .HasDatabaseName("ix_github_access_tokens_user_id");
+                        .HasDatabaseName("ix_git_hub_access_tokens_user_id");
 
-                    b.ToTable("github_access_tokens", "dev_habit");
+                    b.ToTable("git_hub_access_tokens", "dev_habit");
                 });
 
-            modelBuilder.Entity("DevHabitApi.Entities.Habit", b =>
+            modelBuilder.Entity("DevHabit.Api.Entities.Habit", b =>
                 {
                     b.Property<string>("Id")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("id");
 
-                    b.Property<DateTime>("CreateAtUtc")
+                    b.Property<int?>("AutomationSource")
+                        .HasColumnType("integer")
+                        .HasColumnName("automation_source");
+
+                    b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("create_at_utc");
+                        .HasColumnName("created_at_utc");
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
@@ -84,14 +158,14 @@ namespace DevHabitApi.Migrations.Application
                         .HasColumnType("boolean")
                         .HasColumnName("is_archived");
 
-                    b.Property<DateTime?>("LastCompletedUtc")
+                    b.Property<DateTime?>("LastCompletedAtUtc")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_completed_utc");
+                        .HasColumnName("last_completed_at_utc");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("name");
 
                     b.Property<int>("Status")
@@ -108,6 +182,7 @@ namespace DevHabitApi.Migrations.Application
 
                     b.Property<string>("UserId")
                         .IsRequired()
+                        .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("user_id");
 
@@ -120,13 +195,15 @@ namespace DevHabitApi.Migrations.Application
                     b.ToTable("habits", "dev_habit");
                 });
 
-            modelBuilder.Entity("DevHabitApi.Entities.HabitTag", b =>
+            modelBuilder.Entity("DevHabit.Api.Entities.HabitTag", b =>
                 {
                     b.Property<string>("HabitId")
+                        .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("habit_id");
 
                     b.Property<string>("TagId")
+                        .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("tag_id");
 
@@ -143,7 +220,7 @@ namespace DevHabitApi.Migrations.Application
                     b.ToTable("habit_tags", "dev_habit");
                 });
 
-            modelBuilder.Entity("DevHabitApi.Entities.Tag", b =>
+            modelBuilder.Entity("DevHabit.Api.Entities.Tag", b =>
                 {
                     b.Property<string>("Id")
                         .HasMaxLength(500)
@@ -171,6 +248,7 @@ namespace DevHabitApi.Migrations.Application
 
                     b.Property<string>("UserId")
                         .IsRequired()
+                        .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("user_id");
 
@@ -184,7 +262,7 @@ namespace DevHabitApi.Migrations.Application
                     b.ToTable("tags", "dev_habit");
                 });
 
-            modelBuilder.Entity("DevHabitApi.Entities.User", b =>
+            modelBuilder.Entity("DevHabit.Api.Entities.User", b =>
                 {
                     b.Property<string>("Id")
                         .HasMaxLength(500)
@@ -231,26 +309,45 @@ namespace DevHabitApi.Migrations.Application
                     b.ToTable("users", "dev_habit");
                 });
 
-            modelBuilder.Entity("DevHabitApi.Entities.GithubAccessToken", b =>
+            modelBuilder.Entity("DevHabit.Api.Entities.Entry", b =>
                 {
-                    b.HasOne("DevHabitApi.Entities.User", null)
+                    b.HasOne("DevHabit.Api.Entities.Habit", "Habit")
+                        .WithMany()
+                        .HasForeignKey("HabitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_entries_habits_habit_id");
+
+                    b.HasOne("DevHabit.Api.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_github_access_tokens_users_user_id");
+                        .HasConstraintName("fk_entries_users_user_id");
+
+                    b.Navigation("Habit");
                 });
 
-            modelBuilder.Entity("DevHabitApi.Entities.Habit", b =>
+            modelBuilder.Entity("DevHabit.Api.Entities.GitHubAccessToken", b =>
                 {
-                    b.HasOne("DevHabitApi.Entities.User", null)
+                    b.HasOne("DevHabit.Api.Entities.User", null)
+                        .WithOne()
+                        .HasForeignKey("DevHabit.Api.Entities.GitHubAccessToken", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_git_hub_access_tokens_users_user_id");
+                });
+
+            modelBuilder.Entity("DevHabit.Api.Entities.Habit", b =>
+                {
+                    b.HasOne("DevHabit.Api.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_habits_users_user_id");
 
-                    b.OwnsOne("DevHabitApi.Entities.Frequency", "Frequency", b1 =>
+                    b.OwnsOne("DevHabit.Api.Entities.Frequency", "Frequency", b1 =>
                         {
                             b1.Property<string>("HabitId")
                                 .HasColumnType("character varying(500)")
@@ -273,7 +370,7 @@ namespace DevHabitApi.Migrations.Application
                                 .HasConstraintName("fk_habits_habits_id");
                         });
 
-                    b.OwnsOne("DevHabitApi.Entities.Milestone", "Milestone", b1 =>
+                    b.OwnsOne("DevHabit.Api.Entities.Milestone", "Milestone", b1 =>
                         {
                             b1.Property<string>("HabitId")
                                 .HasColumnType("character varying(500)")
@@ -296,7 +393,7 @@ namespace DevHabitApi.Migrations.Application
                                 .HasConstraintName("fk_habits_habits_id");
                         });
 
-                    b.OwnsOne("DevHabitApi.Entities.Target", "Target", b1 =>
+                    b.OwnsOne("DevHabit.Api.Entities.Target", "Target", b1 =>
                         {
                             b1.Property<string>("HabitId")
                                 .HasColumnType("character varying(500)")
@@ -330,16 +427,16 @@ namespace DevHabitApi.Migrations.Application
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("DevHabitApi.Entities.HabitTag", b =>
+            modelBuilder.Entity("DevHabit.Api.Entities.HabitTag", b =>
                 {
-                    b.HasOne("DevHabitApi.Entities.Habit", null)
+                    b.HasOne("DevHabit.Api.Entities.Habit", null)
                         .WithMany("HabitTags")
                         .HasForeignKey("HabitId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_habit_tags_habits_habit_id");
 
-                    b.HasOne("DevHabitApi.Entities.Tag", null)
+                    b.HasOne("DevHabit.Api.Entities.Tag", null)
                         .WithMany()
                         .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -347,9 +444,9 @@ namespace DevHabitApi.Migrations.Application
                         .HasConstraintName("fk_habit_tags_tags_tag_id");
                 });
 
-            modelBuilder.Entity("DevHabitApi.Entities.Tag", b =>
+            modelBuilder.Entity("DevHabit.Api.Entities.Tag", b =>
                 {
-                    b.HasOne("DevHabitApi.Entities.User", null)
+                    b.HasOne("DevHabit.Api.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -357,7 +454,7 @@ namespace DevHabitApi.Migrations.Application
                         .HasConstraintName("fk_tags_users_user_id");
                 });
 
-            modelBuilder.Entity("DevHabitApi.Entities.Habit", b =>
+            modelBuilder.Entity("DevHabit.Api.Entities.Habit", b =>
                 {
                     b.Navigation("HabitTags");
                 });

@@ -1,7 +1,7 @@
-﻿using DevHabitApi.Entities;
+﻿using DevHabit.Api.Entities;
 using FluentValidation;
 
-namespace DevHabitApi.DTOs.Habits;
+namespace DevHabit.Api.DTOs.Habits;
 
 public sealed class CreateHabitDtoValidator : AbstractValidator<CreateHabitDto>
 {
@@ -28,6 +28,11 @@ public sealed class CreateHabitDtoValidator : AbstractValidator<CreateHabitDto>
         RuleFor(x => x.Type)
             .IsInEnum()
             .WithMessage("Invalid habit type");
+
+        RuleFor(x => x.AutomationSource)
+            .IsInEnum()
+            .When(x => x.AutomationSource is not null)
+            .WithMessage("Invalid automation source");
 
         // Frequency validation
         RuleFor(x => x.Frequency.Type)
@@ -81,4 +86,3 @@ public sealed class CreateHabitDtoValidator : AbstractValidator<CreateHabitDto>
         };
     }
 }
-

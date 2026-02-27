@@ -1,5 +1,6 @@
 ﻿using System.Linq.Dynamic.Core;
-namespace DevHabitApi.Services.Sorting;
+
+namespace DevHabit.Api.Services.Sorting;
 
 internal static class QueryableExtensions
 {
@@ -9,18 +10,17 @@ internal static class QueryableExtensions
         SortMapping[] mappings,
         string defaultOrderBy = "Id")
     {
-        if (string.IsNullOrEmpty(sort))
+        if (string.IsNullOrWhiteSpace(sort))
         {
             return query.OrderBy(defaultOrderBy);
         }
 
-        var sortFields = sort.Split(',')
+        string[] sortFields = sort.Split(',')
             .Select(s => s.Trim())
             .Where(s => !string.IsNullOrWhiteSpace(s))
             .ToArray();
 
         var orderByParts = new List<string>();
-
         foreach (string field in sortFields)
         {
             (string sortField, bool isDescending) = ParseSortField(field);
@@ -33,7 +33,7 @@ internal static class QueryableExtensions
                 (false, false) => "ASC",
                 (false, true) => "DESC",
                 (true, false) => "DESC",
-                (true, true) => "ASC",
+                (true, true) => "ASC"
             };
 
             orderByParts.Add($"{mapping.PropertyName} {direction}");
@@ -53,5 +53,4 @@ internal static class QueryableExtensions
 
         return (sortField, isDescending);
     }
-
 }

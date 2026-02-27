@@ -1,7 +1,7 @@
 ﻿using System.Linq.Expressions;
-using DevHabitApi.Entities;
+using DevHabit.Api.Entities;
 
-namespace DevHabitApi.DTOs.Users;
+namespace DevHabit.Api.DTOs.Users;
 
 internal static class UserQueries
 {
@@ -10,10 +10,10 @@ internal static class UserQueries
         return u => new UserDto
         {
             Id = u.Id,
+            Email = u.Email,
             Name = u.Name,
             CreatedAtUtc = u.CreatedAtUtc,
-            Emial = u.Email,
-            UpdatedAtUtc = u.UpdatedAtUtc,
+            UpdatedAtUtc = u.UpdatedAtUtc
         };
     }
 }

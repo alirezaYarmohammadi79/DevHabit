@@ -1,9 +1,10 @@
-﻿using DevHabitApi.Database;
-using DevHabitApi.Extensions;
+﻿using DevHabit.Api.Database;
+using DevHabit.Api.Extensions;
+using DevHabitApi.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace DevHabitApi.Services;
+namespace DevHabit.Api.Services;
 
 public sealed class UserContext(
     IHttpContextAccessor httpContextAccessor,
@@ -16,8 +17,7 @@ public sealed class UserContext(
     public async Task<string?> GetUserIdAsync(CancellationToken cancellationToken = default)
     {
         string? identityId = httpContextAccessor.HttpContext?.User.GetIdentityId();
-
-        if (identityId == null)
+        if (identityId is null)
         {
             return null;
         }
@@ -29,8 +29,8 @@ public sealed class UserContext(
             entry.SetSlidingExpiration(CacheDuration);
 
             string? userId = await dbContext.Users
-                .Where(u=> u.IdentityId == identityId)
-                .Select(u=> u.Id)
+                .Where(u => u.IdentityId == identityId)
+                .Select(u => u.Id)
                 .FirstOrDefaultAsync(cancellationToken);
 
             return userId;

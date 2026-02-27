@@ -1,4 +1,4 @@
-﻿using DevHabitApi.Entities;
+﻿using DevHabit.Api.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace DevHabitApi.Database;
@@ -9,7 +9,8 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     public DbSet<Tag> Tags { get; set; }
     public DbSet<HabitTag> HabitTags { get; set; }
     public DbSet<User> Users { get; set; }
-    public DbSet<GithubAccessToken> GithubAccessTokens { get; set; }
+    public DbSet<GitHubAccessToken> GitHubAccessTokens { get; set; }
+    public DbSet<Entry> Entries { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

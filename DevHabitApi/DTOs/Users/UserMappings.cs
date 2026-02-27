@@ -1,7 +1,7 @@
-﻿using DevHabitApi.DTOs.Auth;
-using DevHabitApi.Entities;
+﻿using DevHabit.Api.DTOs.Auth;
+using DevHabit.Api.Entities;
 
-namespace DevHabitApi.DTOs.Users;
+namespace DevHabit.Api.DTOs.Users;
 
 public static class UserMappings
 {
@@ -10,8 +10,8 @@ public static class UserMappings
         return new User
         {
             Id = $"u_{Guid.CreateVersion7()}",
-            Email = dto.Email,
             Name = dto.Name,
+            Email = dto.Email,
             CreatedAtUtc = DateTime.UtcNow
         };
     }

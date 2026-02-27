@@ -1,4 +1,4 @@
-﻿namespace DevHabitApi.Entities;
+﻿namespace DevHabit.Api.Entities;
 
 public sealed class User
 {
@@ -8,5 +8,9 @@ public sealed class User
     public DateTime CreatedAtUtc { get; set; }
     public DateTime? UpdatedAtUtc { get; set; }
 
+    /// <summary>
+    /// We'll use this to store the IdentityId from the Identity Provider.
+    /// This could be any identity provider like Azure AD, Cognito, Keycloak, Auth0, etc.
+    /// </summary>
     public string IdentityId { get; set; }
 }

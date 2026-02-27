@@ -1,4 +1,4 @@
-﻿namespace DevHabitApi.DTOs.Auth;
+﻿namespace DevHabit.Api.DTOs.Auth;
 
 public sealed record RegisterUserDto
 {

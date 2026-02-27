@@ -1,10 +1,10 @@
-﻿namespace DevHabitApi.Entities;
+﻿namespace DevHabit.Api.Entities;
 
 public sealed class Habit
 {
     public string Id { get; set; }
-    public string Name { get; set; }
     public string UserId { get; set; }
+    public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public HabitType Type { get; set; }
     public Frequency Frequency { get; set; }
@@ -13,9 +13,11 @@ public sealed class Habit
     public bool IsArchived { get; set; }
     public DateOnly? EndDate { get; set; }
     public Milestone? Milestone { get; set; }
-    public DateTime CreateAtUtc { get; set; }
+    public AutomationSource? AutomationSource { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
     public DateTime? UpdatedAtUtc { get; set; }
-    public DateTime? LastCompletedUtc { get; set; }
+    public DateTime? LastCompletedAtUtc { get; set; }
+
     public List<HabitTag> HabitTags { get; set; }
     public List<Tag> Tags { get; set; }
 }

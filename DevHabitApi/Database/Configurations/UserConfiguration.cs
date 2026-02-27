@@ -1,20 +1,21 @@
-﻿using DevHabitApi.Entities;
+﻿using DevHabit.Api.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace DevHabitApi.Database.Configurations;
+namespace DevHabit.Api.Database.Configurations;
 
 public sealed class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
-        builder.HasKey(x => x.Id);
+        builder.HasKey(u => u.Id);
 
-        builder.Property(h => h.Id).HasMaxLength(500);
-        
-        builder.Property(h => h.Email).HasMaxLength(300);
-        builder.Property(h => h.Name).HasMaxLength(100);
-        builder.Property(h => h.IdentityId).HasMaxLength(500);
+        builder.Property(u => u.Id).HasMaxLength(500);
+
+        builder.Property(u => u.Email).HasMaxLength(300);
+        builder.Property(u => u.IdentityId).HasMaxLength(500);
+
+        builder.Property(u => u.Name).HasMaxLength(100);
 
         builder.HasIndex(u => u.Email).IsUnique();
         builder.HasIndex(u => u.IdentityId).IsUnique();

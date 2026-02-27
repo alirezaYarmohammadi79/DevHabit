@@ -1,71 +1,72 @@
-﻿using DevHabitApi.Database;
-using DevHabitApi.DTOs.Github;
-using DevHabitApi.Entities;
+using DevHabit.Api.Database;
+using DevHabit.Api.DTOs.GitHub;
+using DevHabit.Api.Entities;
+using DevHabitApi.Database;
 using Microsoft.EntityFrameworkCore;
 
-namespace DevHabitApi.Services;
+namespace DevHabit.Api.Services;
 
-public sealed class GithubAccessTokenService(ApplicationDbContext context , EncryptionService encryptionService)
+public sealed class GitHubAccessTokenService(ApplicationDbContext dbContext, EncryptionService encryptionService)
 {
     public async Task StoreAsync(
         string userId,
         StoreGitHubAccessTokenDto accessTokenDto,
         CancellationToken cancellationToken = default)
     {
-        GithubAccessToken? existingAccessToken = await GetAccessTokenAsync(userId , cancellationToken);
+        GitHubAccessToken? existingAccessToken = await GetAccessTokenAsync(userId, cancellationToken);
 
         string encryptedToken = encryptionService.Encrypt(accessTokenDto.AccessToken);
 
-        if(existingAccessToken is not null)
+        if (existingAccessToken is not null)
         {
             existingAccessToken.Token = encryptedToken;
             existingAccessToken.ExpiresAtUtc = DateTime.UtcNow.AddDays(accessTokenDto.ExpiresInDays);
         }
         else
         {
-            context.GithubAccessTokens.Add(new GithubAccessToken
+            dbContext.GitHubAccessTokens.Add(new GitHubAccessToken
             {
                 Id = $"gh_{Guid.CreateVersion7()}",
                 UserId = userId,
                 Token = encryptedToken,
-                CreateAtUtc = DateTime.UtcNow,
+                CreatedAtUtc = DateTime.UtcNow,
                 ExpiresAtUtc = DateTime.UtcNow.AddDays(accessTokenDto.ExpiresInDays)
             });
         }
 
-        await context.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<string?> GetAsync(string userId , CancellationToken cancellationToken = default)
+    public async Task<string?> GetAsync(string userId, CancellationToken cancellationToken = default)
     {
-        GithubAccessToken? githubAccessToken = await GetAccessTokenAsync(userId,  cancellationToken);
+        GitHubAccessToken? gitHubAccessToken = await GetAccessTokenAsync(userId, cancellationToken);
 
-        if(githubAccessToken is null)
+        if (gitHubAccessToken is null)
         {
-            return null; 
+            return null;
         }
 
-        string decryptedToken = encryptionService.Decrypt(githubAccessToken.Token);
+        string decryptedToken = encryptionService.Decrypt(gitHubAccessToken.Token);
 
         return decryptedToken;
     }
 
-    public async Task RevokeAsync(string userId , CancellationToken cancellationToken = default)
+    public async Task RevokeAsync(string userId, CancellationToken cancellationToken = default)
     {
-        GithubAccessToken? githubAccessToken = await GetAccessTokenAsync(userId, cancellationToken);
+        GitHubAccessToken? gitHubAccessToken = await GetAccessTokenAsync(userId, cancellationToken);
 
-        if( githubAccessToken is null)
+        if (gitHubAccessToken is null)
         {
             return;
         }
 
-        context.GithubAccessTokens.Remove(githubAccessToken);
+        dbContext.GitHubAccessTokens.Remove(gitHubAccessToken);
 
-        await context.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task<GithubAccessToken?> GetAccessTokenAsync(string userId, CancellationToken cancellationToken)
+    private async Task<GitHubAccessToken?> GetAccessTokenAsync(string userId, CancellationToken cancellationToken)
     {
-        return await context.GithubAccessTokens.SingleOrDefaultAsync(p=> p.UserId == userId , cancellationToken);
+        return await dbContext.GitHubAccessTokens.SingleOrDefaultAsync(p => p.UserId == userId, cancellationToken);
     }
 }

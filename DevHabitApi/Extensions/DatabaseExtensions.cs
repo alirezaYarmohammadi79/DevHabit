@@ -1,40 +1,39 @@
-﻿using DevHabitApi.Database;
-using DevHabitApi.Entities;
+﻿using DevHabit.Api.Database;
+using DevHabit.Api.Entities;
+using DevHabitApi.Database;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace DevHabitApi.Extensions;
+namespace DevHabit.Api.Extensions;
 
 public static class DatabaseExtensions
 {
     public static async Task ApplyMigrationsAsync(this WebApplication app)
     {
         using IServiceScope scope = app.Services.CreateScope();
-
-        await using ApplicationDbContext applicationContext =
-            scope.ServiceProvider.GetService<ApplicationDbContext>();
-
-        await using ApplicationIdentityDbContext identityContext =
-            scope.ServiceProvider.GetService<ApplicationIdentityDbContext>();
+        await using ApplicationDbContext applicationDbContext =
+            scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await using ApplicationIdentityDbContext identityDbContext =
+            scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
 
         try
         {
-            await applicationContext!.Database.MigrateAsync();
-            app.Logger.LogInformation("Application database Migrations applied successfully");
+            await applicationDbContext.Database.MigrateAsync();
+            app.Logger.LogInformation("Application database migrations applied successfully.");
 
-            await identityContext!.Database.MigrateAsync();
-            app.Logger.LogInformation("Identity database Migrations applied successfully");
+            await identityDbContext.Database.MigrateAsync();
+            app.Logger.LogInformation("Identity database migrations applied successfully.");
         }
         catch (Exception e)
         {
-            app.Logger.LogError(e, "an error occured while applying database migrations.");
+            app.Logger.LogError(e, "An error occurred while applying database migrations.");
             throw;
         }
     }
 
-    public static async Task SeedInitialDataAsync(this WebApplication application)
+    public static async Task SeedInitialDataAsync(this WebApplication app)
     {
-        using IServiceScope scope = application.Services.CreateScope();
+        using IServiceScope scope = app.Services.CreateScope();
         RoleManager<IdentityRole> roleManager =
             scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
@@ -49,11 +48,11 @@ public static class DatabaseExtensions
                 await roleManager.CreateAsync(new IdentityRole(Roles.Admin));
             }
 
-            application.Logger.LogInformation("succesfully created roles. ");
+            app.Logger.LogInformation("Successfully created roles.");
         }
         catch (Exception ex)
         {
-            application.Logger.LogError(ex, "An error occured while seeding initial data.");
+            app.Logger.LogError(ex, "An error occurred while seeding initial data.");
             throw;
         }
     }

@@ -1,11 +1,6 @@
-﻿namespace DevHabitApi.DTOs.Common;
+﻿namespace DevHabit.Api.DTOs.Common;
 
 public interface ICollectionResponse<T>
 {
-    List<T> Data { get; init; }
-}
-
-public interface ILinkResponse
-{
-    List<LinkDto> Links { get; set; }
+    List<T> Items { get; init; }
 }

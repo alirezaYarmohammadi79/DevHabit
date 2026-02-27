@@ -1,6 +1,6 @@
-﻿namespace DevHabitApi.DTOs.Auth;
+﻿namespace DevHabit.Api.DTOs.Auth;
 
-public sealed class RefreshTokenDto
+public sealed record RefreshTokenDto
 {
     public required string RefreshToken { get; init; }
 }

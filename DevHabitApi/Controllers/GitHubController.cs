@@ -1,17 +1,23 @@
-﻿
-using DevHabitApi.DTOs.Github;
-using DevHabitApi.Entities;
-using DevHabitApi.Services;
+﻿using System.Net.Mime;
+using DevHabit.Api.DTOs.Common;
+using DevHabit.Api.DTOs.GitHub;
+using DevHabit.Api.Entities;
+using DevHabit.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace DevHabitApi.Controllers;
+namespace DevHabit.Api.Controllers;
 
 [Authorize(Roles = Roles.Member)]
 [ApiController]
 [Route("github")]
-public class GitHubController(
-    GithubAccessTokenService githubAccessTokenService,
+[Produces(
+    MediaTypeNames.Application.Json,
+    CustomMediaTypeNames.Application.JsonV1,
+    CustomMediaTypeNames.Application.HateoasJson,
+    CustomMediaTypeNames.Application.HateoasJsonV1)]
+public sealed class GitHubController(
+    GitHubAccessTokenService gitHubAccessTokenService,
     GitHubService gitHubService,
     UserContext userContext,
     LinkService linkService) : ControllerBase
@@ -19,14 +25,13 @@ public class GitHubController(
     [HttpPut("personal-access-token")]
     public async Task<IActionResult> StoreAccessToken(StoreGitHubAccessTokenDto storeGitHubAccessTokenDto)
     {
-        var userId = await userContext.GetUserIdAsync();
-
+        string? userId = await userContext.GetUserIdAsync();
         if (string.IsNullOrWhiteSpace(userId))
         {
             return Unauthorized();
         }
 
-        await githubAccessTokenService.StoreAsync(userId, storeGitHubAccessTokenDto);
+        await gitHubAccessTokenService.StoreAsync(userId, storeGitHubAccessTokenDto);
 
         return NoContent();
     }
@@ -34,20 +39,19 @@ public class GitHubController(
     [HttpDelete("personal-access-token")]
     public async Task<IActionResult> RevokeAccessToken()
     {
-        var userId = await userContext.GetUserIdAsync();
-
+        string? userId = await userContext.GetUserIdAsync();
         if (string.IsNullOrWhiteSpace(userId))
         {
             return Unauthorized();
         }
 
-        await githubAccessTokenService.RevokeAsync(userId);
+        await gitHubAccessTokenService.RevokeAsync(userId);
 
         return NoContent();
     }
 
     [HttpGet("profile")]
-    public async Task<ActionResult<GitHubUserProfileDto>> GetUserProfile()
+    public async Task<ActionResult<GitHubUserProfileDto>> GetUserProfile([FromHeader] AcceptHeaderDto acceptHeader)
     {
         string? userId = await userContext.GetUserIdAsync();
         if (string.IsNullOrWhiteSpace(userId))
@@ -55,25 +59,27 @@ public class GitHubController(
             return Unauthorized();
         }
 
-        string? accessToken = await githubAccessTokenService.GetAsync(userId);
+        string? accessToken = await gitHubAccessTokenService.GetAsync(userId);
         if (string.IsNullOrWhiteSpace(accessToken))
         {
             return NotFound();
         }
 
         GitHubUserProfileDto? userProfile = await gitHubService.GetUserProfileAsync(accessToken);
-
         if (userProfile is null)
         {
             return NotFound();
         }
 
-        userProfile.Links =
-        [
-            linkService.Create(nameof(GetUserProfile) , "self" , HttpMethods.Get),
-            linkService.Create(nameof(StoreAccessToken) , "store-token" , HttpMethods.Put),
-            linkService.Create(nameof(RevokeAccessToken) , "revoke-token" , HttpMethods.Delete)
-        ];
+        if (acceptHeader.IncludeLinks)
+        {
+            userProfile.Links =
+            [
+                linkService.Create(nameof(GetUserProfile), "self", HttpMethods.Get),
+                linkService.Create(nameof(StoreAccessToken), "store-token", HttpMethods.Put),
+                linkService.Create(nameof(RevokeAccessToken), "revoke-token", HttpMethods.Delete)
+            ];
+        }
 
         return Ok(userProfile);
     }

@@ -1,7 +1,6 @@
-﻿using DevHabitApi.DTOs.Tags;
-using DevHabitApi.Entities;
+﻿using DevHabit.Api.Entities;
 
-namespace DevHabitApi.DTOs.Habits;
+namespace DevHabit.Api.DTOs.Tags;
 
 internal static class TagMappings
 {
@@ -17,12 +16,12 @@ internal static class TagMappings
         };
     }
 
-    public static Tag ToEntity(this CreateTagDto dto , string userId)
+    public static Tag ToEntity(this CreateTagDto dto, string userId)
     {
         Tag habit = new()
         {
             Id = $"t_{Guid.CreateVersion7()}",
-            UserId = userId ,
+            UserId = userId,
             Name = dto.Name,
             Description = dto.Description,
             CreatedAtUtc = DateTime.UtcNow

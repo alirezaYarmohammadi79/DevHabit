@@ -1,3 +1,3 @@
-﻿namespace DevHabitApi.Services.Sorting;
+﻿namespace DevHabit.Api.Services.Sorting;
 
 public interface ISortMappingDefinition;

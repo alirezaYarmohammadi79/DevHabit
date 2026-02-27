@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 
-namespace DevHabitApi.Extensions;
+namespace DevHabit.Api.Extensions;
 
 public static class ClaimsPrincipalExtensions
 {

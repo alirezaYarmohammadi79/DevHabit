@@ -1,11 +1,12 @@
-﻿using DevHabitApi.Entities;
+﻿using DevHabit.Api.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace DevHabitApi.Database;
 
-public class ApplicationIdentityDbContext(DbContextOptions<ApplicationIdentityDbContext> options) : IdentityDbContext(options)
+public sealed class ApplicationIdentityDbContext(DbContextOptions<ApplicationIdentityDbContext> options)
+    : IdentityDbContext(options)
 {
     public DbSet<RefreshToken> RefreshTokens { get; set; }
 
@@ -32,9 +33,9 @@ public class ApplicationIdentityDbContext(DbContextOptions<ApplicationIdentityDb
 
             entity.HasIndex(e => e.Token).IsUnique();
 
-            entity.HasOne(e=> e.User)
+            entity.HasOne(e => e.User)
                 .WithMany()
-                .HasForeignKey(e=> e.UserId)
+                .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

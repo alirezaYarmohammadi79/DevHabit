@@ -1,4 +1,4 @@
-﻿namespace DevHabitApi.Services.Sorting;
+﻿namespace DevHabit.Api.Services.Sorting;
 
 public sealed class SortMappingDefinition<TSource, TDestination> : ISortMappingDefinition
 {

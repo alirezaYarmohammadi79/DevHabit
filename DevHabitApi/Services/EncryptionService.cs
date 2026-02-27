@@ -1,8 +1,8 @@
 ﻿using System.Security.Cryptography;
-using DevHabitApi.Settings;
+using DevHabit.Api.Settings;
 using Microsoft.Extensions.Options;
 
-namespace DevHabitApi.Services;
+namespace DevHabit.Api.Services;
 
 public sealed class EncryptionService(IOptions<EncryptionOptions> options)
 {
@@ -22,7 +22,7 @@ public sealed class EncryptionService(IOptions<EncryptionOptions> options)
             using var memoryStream = new MemoryStream();
             memoryStream.Write(aes.IV, 0, IvSize);
 
-            using (var encryptor = aes.CreateEncryptor())
+            using (ICryptoTransform encryptor = aes.CreateEncryptor())
             using (var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write))
             using (var streamWriter = new StreamWriter(cryptoStream))
             {
@@ -43,16 +43,17 @@ public sealed class EncryptionService(IOptions<EncryptionOptions> options)
         {
             byte[] cipherData = Convert.FromBase64String(cipherText);
 
-            if(cipherData.Length < IvSize)
+            if (cipherData.Length < IvSize)
             {
-                throw new InvalidOperationException("Invalid cipher text format");
+                throw new InvalidOperationException("Invalid cipher text format.");
             }
 
+            // Extract the IV and cipher text data from the cipher data
             byte[] iv = new byte[IvSize];
             byte[] encryptedData = new byte[cipherData.Length - IvSize];
 
-            Buffer.BlockCopy(cipherData , 0 , iv , 0, IvSize);
-            Buffer.BlockCopy(cipherData, IvSize, encryptedData, 0, encryptedData.Length); 
+            Buffer.BlockCopy(cipherData, 0, iv, 0, IvSize);
+            Buffer.BlockCopy(cipherData, IvSize, encryptedData, 0, encryptedData.Length);
 
             using var aes = Aes.Create();
             aes.Mode = CipherMode.CBC;
@@ -60,16 +61,20 @@ public sealed class EncryptionService(IOptions<EncryptionOptions> options)
             aes.Key = _masterKey;
             aes.IV = iv;
 
-            using var memoryStream = new MemoryStream(encryptedData);
-            using var encryptor = aes.CreateDecryptor();
-            using var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Read);
-            using var streamReader = new StreamReader(cryptoStream);
+            using MemoryStream memoryStream = new(encryptedData);
+            using ICryptoTransform decryptor = aes.CreateDecryptor();
+            using CryptoStream cryptoStream = new(memoryStream, decryptor, CryptoStreamMode.Read);
+            using StreamReader streamReader = new(cryptoStream);
 
             return streamReader.ReadToEnd();
         }
-        catch (CryptographicException e)
+        catch (CryptographicException ex)
         {
-            throw new InvalidOperationException("Decription failed", e);
+            throw new InvalidOperationException("Decryption failed", ex);
+        }
+        catch (FormatException ex)
+        {
+            throw new InvalidOperationException("Invalid cipher text format", ex);
         }
     }
 }

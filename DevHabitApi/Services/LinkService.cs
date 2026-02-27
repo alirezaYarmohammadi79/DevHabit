@@ -1,6 +1,6 @@
-﻿using DevHabitApi.DTOs.Common;
+﻿using DevHabit.Api.DTOs.Common;
 
-namespace DevHabitApi.Services;
+namespace DevHabit.Api.Services;
 
 public sealed class LinkService(LinkGenerator linkGenerator, IHttpContextAccessor httpContextAccessor)
 {
@@ -20,8 +20,8 @@ public sealed class LinkService(LinkGenerator linkGenerator, IHttpContextAccesso
         return new LinkDto
         {
             Href = href ?? throw new Exception("Invalid endpoint name provided"),
-            Method = method,
             Rel = rel,
+            Method = method
         };
-    }  
+    }
 }

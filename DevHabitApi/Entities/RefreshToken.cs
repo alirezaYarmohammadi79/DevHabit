@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace DevHabitApi.Entities;
+namespace DevHabit.Api.Entities;
 
 public sealed class RefreshToken
 {
@@ -9,5 +9,5 @@ public sealed class RefreshToken
     public required string Token { get; set; }
     public required DateTime ExpiresAtUtc { get; set; }
 
-    public IdentityUser User { get; set;  }
+    public IdentityUser User { get; set; }
 }

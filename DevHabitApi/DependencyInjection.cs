@@ -1,13 +1,16 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
 using Asp.Versioning;
+using DevHabit.Api.Database;
+using DevHabit.Api.DTOs.Entries;
+using DevHabit.Api.DTOs.Habits;
+using DevHabit.Api.Entities;
+using DevHabit.Api.Jobs;
+using DevHabit.Api.Middleware;
+using DevHabit.Api.Services;
+using DevHabit.Api.Services.Sorting;
+using DevHabit.Api.Settings;
 using DevHabitApi.Database;
-using DevHabitApi.DTOs.Habits;
-using DevHabitApi.Entities;
-using DevHabitApi.Middleware;
-using DevHabitApi.Services;
-using DevHabitApi.Services.Sorting;
-using DevHabitApi.Settings;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -22,10 +25,11 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Quartz;
 
-namespace DevHabitApi;
+namespace DevHabit.Api;
 
-public static class DependecyInjection
+public static class DependencyInjection
 {
     public static WebApplicationBuilder AddApiServices(this WebApplicationBuilder builder)
     {
@@ -50,19 +54,21 @@ public static class DependecyInjection
             formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateoasJsonV2);
         });
 
-        builder.Services.AddApiVersioning(options =>
-        {
-            options.DefaultApiVersion = new ApiVersion(1.0);
-            options.AssumeDefaultVersionWhenUnspecified = true;
-            options.ReportApiVersions = true;
-            options.ApiVersionSelector = new DefaultApiVersionSelector(options);
+        builder.Services
+            .AddApiVersioning(options =>
+            {
+                options.DefaultApiVersion = new ApiVersion(1.0);
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ReportApiVersions = true;
+                options.ApiVersionSelector = new DefaultApiVersionSelector(options);
 
-            options.ApiVersionReader = ApiVersionReader.Combine(
-                new MediaTypeApiVersionReader(),
-                new MediaTypeApiVersionReaderBuilder()
-                    .Template("application/vnd.dev-habit.hateoas.{version}+json")
-                    .Build());
-        });
+                options.ApiVersionReader = ApiVersionReader.Combine(
+                    new MediaTypeApiVersionReader(),
+                    new MediaTypeApiVersionReaderBuilder()
+                        .Template("application/vnd.dev-habit.hateoas.{version}+json")
+                        .Build());
+            })
+            .AddMvc();
 
         builder.Services.AddOpenApi();
 
@@ -78,7 +84,6 @@ public static class DependecyInjection
                 context.ProblemDetails.Extensions.TryAdd("requestId", context.HttpContext.TraceIdentifier);
             };
         });
-
         builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
@@ -91,28 +96,30 @@ public static class DependecyInjection
             options
                 .UseNpgsql(
                     builder.Configuration.GetConnectionString("Database"),
-                    npgsqlOptions => npgsqlOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Application))
-            .UseSnakeCaseNamingConvention());
+                    npgsqlOptions => npgsqlOptions
+                        .MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Application))
+                .UseSnakeCaseNamingConvention());
 
         builder.Services.AddDbContext<ApplicationIdentityDbContext>(options =>
             options
                 .UseNpgsql(
                     builder.Configuration.GetConnectionString("Database"),
-                    npgsqlOptions => npgsqlOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Identity))
-            .UseSnakeCaseNamingConvention());
+                    npgsqlOptions => npgsqlOptions
+                        .MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Identity))
+                .UseSnakeCaseNamingConvention());
 
         return builder;
     }
 
-    public static WebApplicationBuilder AddObservabilty(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddObservability(this WebApplicationBuilder builder)
     {
         builder.Services.AddOpenTelemetry()
-            .ConfigureResource(resouce => resouce.AddService(builder.Environment.ApplicationName))
-            .WithTracing(traing => traing
+            .ConfigureResource(resource => resource.AddService(builder.Environment.ApplicationName))
+            .WithTracing(tracing => tracing
                 .AddHttpClientInstrumentation()
                 .AddAspNetCoreInstrumentation()
                 .AddNpgsql())
-            .WithMetrics(metrices => metrices
+            .WithMetrics(metrics => metrics
                 .AddHttpClientInstrumentation()
                 .AddAspNetCoreInstrumentation()
                 .AddRuntimeInstrumentation())
@@ -134,8 +141,10 @@ public static class DependecyInjection
         builder.Services.AddTransient<SortMappingProvider>();
         builder.Services.AddSingleton<ISortMappingDefinition, SortMappingDefinition<HabitDto, Habit>>(_ =>
             HabitMappings.SortMapping);
+        builder.Services.AddSingleton<ISortMappingDefinition, SortMappingDefinition<EntryDto, Entry>>(_ =>
+            EntryMappings.SortMapping);
 
-        builder.Services.AddTransient<DatashapingService>();
+        builder.Services.AddTransient<DataShapingService>();
 
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddTransient<LinkService>();
@@ -145,7 +154,7 @@ public static class DependecyInjection
         builder.Services.AddMemoryCache();
         builder.Services.AddScoped<UserContext>();
 
-        builder.Services.AddScoped<GithubAccessTokenService>();
+        builder.Services.AddScoped<GitHubAccessTokenService>();
         builder.Services.AddTransient<GitHubService>();
         builder.Services
             .AddHttpClient("github")
@@ -160,39 +169,88 @@ public static class DependecyInjection
                     .Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
             });
 
-        builder.Services.Configure<EncryptionOptions>(builder.Configuration.GetSection("Encryption"));
+        builder.Services.Configure<EncryptionOptions>(
+            builder.Configuration.GetSection(EncryptionOptions.SectionName));
         builder.Services.AddTransient<EncryptionService>();
+
+        builder.Services.Configure<GitHubAutomationOptions>(
+            builder.Configuration.GetSection(GitHubAutomationOptions.SectionName));
 
         return builder;
     }
 
-    public static WebApplicationBuilder AddAuthenticationServices(this WebApplicationBuilder builder) 
+    public static WebApplicationBuilder AddAuthenticationServices(this WebApplicationBuilder builder)
     {
         builder.Services
-            .AddIdentity<IdentityUser , IdentityRole>()
+            .AddIdentity<IdentityUser, IdentityRole>()
             .AddEntityFrameworkStores<ApplicationIdentityDbContext>();
 
-        builder.Services.Configure<JwtAuthOptions>(builder.Configuration.GetSection("Jwt"));
-
-        JwtAuthOptions jwtAuthOptions = builder.Configuration.GetSection("Jwt").Get<JwtAuthOptions>()!;
+        builder.Services.Configure<JwtAuthOptions>(builder.Configuration.GetSection(JwtAuthOptions.SectionName));
+        JwtAuthOptions jwtAuthOptions = builder.Configuration
+            .GetSection(JwtAuthOptions.SectionName)
+            .Get<JwtAuthOptions>()!;
 
         builder.Services
             .AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; 
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-            .AddJwtBearer(options => 
+            .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidIssuer = jwtAuthOptions.Issuer,
                     ValidAudience = jwtAuthOptions.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtAuthOptions.Key)),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtAuthOptions.Key))
                 };
             });
 
-        builder.Services.AddAuthentication();
+        builder.Services.AddAuthorization();
+
+        return builder;
+    }
+
+    public static WebApplicationBuilder AddBackgroundJobs(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddQuartz(q =>
+        {
+            q.AddJob<GitHubAutomationSchedulerJob>(opts => opts.WithIdentity("github-automation-scheduler"));
+
+            q.AddTrigger(opts => opts
+                .ForJob("github-automation-scheduler")
+                .WithIdentity("github-automation-scheduler-trigger")
+                .WithSimpleSchedule(s =>
+                {
+                    GitHubAutomationOptions settings = builder.Configuration
+                        .GetSection(GitHubAutomationOptions.SectionName)
+                        .Get<GitHubAutomationOptions>()!;
+
+                    s.WithIntervalInMinutes(settings.ScanIntervalMinutes)
+                        .RepeatForever();
+                }));
+        });
+
+
+        builder.Services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
+
+        return builder;
+    }
+
+    public static WebApplicationBuilder AddCorsPolicy(this WebApplicationBuilder builder)
+    {
+        CorsOptions corsOptions = builder.Configuration.GetSection(CorsOptions.SectionName).Get<CorsOptions>()!;
+
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy(CorsOptions.PolicyName, policy =>
+            {
+                policy
+                    .WithOrigins(corsOptions.AllowedOrigins)
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+            });
+        });
 
         return builder;
     }

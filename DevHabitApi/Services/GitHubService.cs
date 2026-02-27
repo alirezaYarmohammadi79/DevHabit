@@ -1,10 +1,10 @@
-﻿using System.Net.Http.Headers;
-using DevHabitApi.DTOs.Github;
+using System.Net.Http.Headers;
+using DevHabit.Api.DTOs.GitHub;
 using Newtonsoft.Json;
 
-namespace DevHabitApi.Services;
+namespace DevHabit.Api.Services;
 
-public sealed class GitHubService(IHttpClientFactory httpClientFactory , ILogger<GitHubService> logger)
+public sealed class GitHubService(IHttpClientFactory httpClientFactory, ILogger<GitHubService> logger)
 {
     public async Task<GitHubUserProfileDto?> GetUserProfileAsync(
         string accessToken,
@@ -16,7 +16,7 @@ public sealed class GitHubService(IHttpClientFactory httpClientFactory , ILogger
 
         if (!response.IsSuccessStatusCode)
         {
-            logger.LogWarning("Failed to get GitHub user profile. Status code : {StatusCode}", response.StatusCode);
+            logger.LogWarning("Failed to get GitHub user profile. Status code: {StatusCode}", response.StatusCode);
             return null;
         }
 
@@ -25,35 +25,37 @@ public sealed class GitHubService(IHttpClientFactory httpClientFactory , ILogger
         return JsonConvert.DeserializeObject<GitHubUserProfileDto>(content);
     }
 
-    //public async Task<IReadOnlyList<GitHubEventDto>?> GetUserEventsAsync(
-    //    string username,
-    //    string accessToken,
-    //    CancellationToken cancellationToken = default)
-    //{
-    //    ArgumentException.ThrowIfNullOrEmpty(username);
+    public async Task<IReadOnlyList<GitHubEventDto>?> GetUserEventsAsync(
+        string username,
+        string accessToken,
+        int page = 1,
+        int perPage = 100,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(username);
 
-    //    using HttpClient client = CreateGitHubClient(accessToken);
+        using HttpClient client = CreateGitHubClient(accessToken);
 
-    //    HttpResponseMessage response = await client.GetAsync(
-    //        $"users/{username}/events?per_page=100",
-    //        cancellationToken);
+        HttpResponseMessage response = await client.GetAsync(
+            $"users/{username}/events?page={page}&per_page={perPage}",
+            cancellationToken);
 
-    //    if (!response.IsSuccessStatusCode)
-    //    {
-    //        logger.LogWarning("Failed to get GitHub user events. Status code : {StatusCode}", response.StatusCode);
-    //        return null;
-    //    }
+        if (!response.IsSuccessStatusCode)
+        {
+            logger.LogWarning("Failed to get GitHub user events. Status code: {StatusCode}", response.StatusCode);
+            return null;
+        }
 
-    //    string content = await response.Content.ReadAsStringAsync(cancellationToken);
+        string content = await response.Content.ReadAsStringAsync(cancellationToken);
 
-    //    return JsonConvert.DeserializeObject<List<GitHubEventDto>>(content);
-    //}
+        return JsonConvert.DeserializeObject<List<GitHubEventDto>>(content);
+    }
 
     private HttpClient CreateGitHubClient(string accessToken)
     {
         HttpClient client = httpClientFactory.CreateClient("github");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
+        
         return client;
     }
 }

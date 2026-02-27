@@ -1,18 +1,20 @@
-using DevHabitApi;
-using DevHabitApi.Extensions;
-using Microsoft.EntityFrameworkCore;
+using DevHabit.Api;
+using DevHabit.Api.Extensions;
+using DevHabit.Api.Settings;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+builder
+    .AddApiServices()
+    .AddErrorHandling()
+    .AddDatabase()
+    .AddObservability()
+    .AddApplicationServices()
+    .AddAuthenticationServices()
+    .AddBackgroundJobs()
+    .AddCorsPolicy();
 
-builder.AddApiServices()
-       .AddErrorHandling()
-       .AddDatabase()
-       .AddObservabilty()
-       .AddApplicationServices()
-       .AddAuthenticationServices();
-
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
@@ -26,6 +28,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseExceptionHandler();
+
+app.UseCors(CorsOptions.PolicyName);
 
 app.UseAuthentication();
 app.UseAuthorization();
